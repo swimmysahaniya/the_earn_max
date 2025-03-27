@@ -1,0 +1,573 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");  
+body {
+  /* Typography */
+  font-family: 'Poppins', sans-serif; /* Modern font */
+  font-size: 16px; /* Base font size for readability */
+  font-weight: 400; /* Normal font weight */
+  line-height: 1.6; /* Comfortable line spacing */
+  color: #333; /* Dark gray text color for better readability */
+
+  /* Background and Spacing */
+  background-color: #fff; /* Light background for clean design */
+  margin: 0; /* Remove default body margin */
+  padding: 0; /* Remove default body padding */
+
+  /* Box Sizing */
+  box-sizing: border-box; /* Ensure padding and border are included in width/height */
+
+  /* Smooth Rendering */
+  -webkit-font-smoothing: antialiased; /* Better font rendering for Webkit browsers */
+  -moz-osx-font-smoothing: grayscale; /* Better font rendering for Mac OS X */
+
+  -webkit-user-select: none;  /* Safari */
+  -moz-user-select: none;     /* Firefox */
+  -ms-user-select: none;      /* Internet Explorer/Edge */
+  user-select: none;          /* Non-prefixed version, supported by most browsers */
+
+  /* Responsive Design */
+  min-height: 100vh; /* Ensure body spans full viewport height */
+}
+
+/* Optional Reset for Images, Links,
+
+}
+/* Scrollbar styles */
+body::-webkit-scrollbar {
+  width: 5px; /* Set the width of the scrollbar */
+}
+
+body::-webkit-scrollbar-track {
+  background: rgb(230, 219, 219);
+}
+
+body::-webkit-scrollbar-thumb {
+  background: #d6c6b3;
+}
+  
+body::-webkit-scrollbar-thumb:hover {
+  background:red;
+}
+a {
+  color: #f8f9fa;
+  text-decoration: none;
+  font-size: 14px;
+}
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* .row{
+  width: 100%;
+} */
+.container-fluid{
+  padding-left: 0px;
+  padding-right: 0px;
+}
+.navbar-brand{
+  font-size: 35px;
+  color: #fff;
+}
+.navbar-brand:focus, .navbar-brand:hover {
+  color: #ff7300;
+}
+.navbar-toggler{
+  background-color: #f8f9fa;
+  border: var(--bs-border-width) solid #551a8b2b;
+}
+.bg-light{
+  background: linear-gradient(to bottom, #551a8b, rgb(255 115 0 / 34%));
+  /* background-color: #551A8B !important; */
+  box-shadow: 0 4px 10px 0 rgb(8 39 32 / 14%);
+    margin-left: auto;
+    margin-right: auto;
+}
+.btn-success{
+  background-color:#551A8B;
+  border: 1px solid #551A8B;
+}
+.btn-success:hover{
+  background-color: #ff7300;
+  border: 1px solid #ff7300;  
+}
+.btn-outline-success{
+  border: 1px solid #fff;
+  color: #fff;
+}
+.btn-outline-success:hover{
+  border: 1px solid #ff7300;
+  color: #fff;
+  background-color: #ff7300;
+}
+.header-banner {
+  color: #000;
+  padding: 0px;
+  text-align: center;
+  margin-top: 2px;
+  background-color: #fffaeb6b;
+  /* background-image: linear-gradient(180deg #dce5e95c, #fff); */
+}
+/* Banner right side css */
+.profile-card {
+  max-width: 400px;
+  margin: auto;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  background-color: #fff;
+}
+
+.profile-img {
+  width: 150px;
+  height: 60px;
+  border-radius: 1%;
+  object-fit: cover;
+}
+
+.btn-orange {
+  /* background-color: #551A8B; */
+  color: white;
+  border: none;
+  background: linear-gradient(to bottom, #551a8b, rgb(255 115 0 / 34%));
+}
+
+.btn-orange:hover {
+  background-color: #e66a00;
+  color: #fff;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.icon-btn i {
+  font-size: 16px;
+}
+
+.small-text {
+  font-size: 12px;
+}
+.scrolling-text {
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
+  box-shadow: 0 4px 10px 0 rgb(8 39 32 / 14%);
+  margin-left: auto;
+  margin-right: auto;
+  padding: 10px;
+}
+.scrolling-text span {
+  display: inline-block;
+  animation: scroll-text 10s linear infinite;
+}
+@keyframes scroll-text {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.icon-card {
+  text-align: center;
+  /* background: #551a8b !important; */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 15px;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0px 2px 5px rgb(0 0 0 / 29%);
+  background: linear-gradient(to bottom, #551a8b, rgb(255 115 0 / 34%));
+}
+/* Gallery section css */
+.gallery-card {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.gallery-card img {
+  width: 100%;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+.gallery-card img:hover {
+  transform: scale(1.05);
+}
+.badge-free {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #000;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+/* why choose us */
+.icon-box {
+  text-align: center;
+}
+.icon-box img {
+  height: 60px;
+  margin-bottom: 15px;
+}
+.icon-box h5 {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.icon-box p {
+  color: #6c757d; /* Bootstrap's text-muted color */
+}
+/* blog css */
+.blog-thumbnail {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+.blog-thumbnail:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+.blog-thumbnail img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+.blog-thumbnail .card-body {
+  padding: 15px;
+}
+.blog-thumbnail .card-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+.blog-thumbnail .card-text {
+  color: #6c757d;
+}
+.blog-thumbnail .read-more {
+  color: #551A8B;
+  font-weight: bold;
+  text-decoration: none;
+}
+.blog-thumbnail .read-more:hover {
+  text-decoration: underline;
+}
+/* Task css */
+#back-button {
+  display: none;
+}
+/* #task-list {
+  height: 400px;
+  overflow-y: auto; 
+  border: 1px solid #ddd;
+  padding: 10px;
+} */
+
+iframe {
+  width: 100%;
+  height: 200px;
+  border: none;
+}
+.card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.card-body {
+  padding: 1rem;
+}
+.white-text{
+  color: #fff;
+}
+.p-10{
+  padding: 10px;
+}
+/* CSS for flash/animation button */
+  /* Flash Animation */
+  @keyframes flash {
+    0% { background-color: #551a8b; box-shadow: 0 0 10px #551a8b; }
+    50% { background-color: #e66a00; box-shadow: 0 0 20px #e66a00; }
+    100% { background-color: #551a8b; box-shadow: 0 0 10px #551a8b; }
+}
+
+.flash-button {
+    animation: flash 1.5s infinite;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 10px 20px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.flash-button:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease-in-out;
+    color: #fff;
+}
+.flash-text {
+  animation: flash 1.5s infinite;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.link-flash{
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(to bottom, #551a8b, rgb(255 115 0 / 34%));
+  padding: 5px;
+  border-radius: 5px;
+}
+/* CSS for footer menu mobile plus desktop */
+.offcanvas {
+  background-color: #f8f9fa; /* Light background */
+  color: #212529; /* Text color */
+}
+
+.offcanvas .offcanvas-body ul li a {
+  font-size: 1rem; /* Adjust text size */
+  text-decoration: none;
+  color: #000; /* Link color */
+  transition: all 0.3s ease-in-out;
+}
+
+.offcanvas .offcanvas-body ul li a:hover {
+  color: #551a8b; /* Hover effect */
+  font-weight: bold;
+}
+
+/* Style the menu list */
+.menu-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  font-size: 16px;
+  color: #333;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.menu-item:hover {
+  background-color: #f4f4f4;
+  /* transform: scale(1.05); */
+}
+
+.menu-item i {
+  margin-right: 10px;
+  font-size: 20px;
+  color: #551a8b;
+}
+
+.menu-item span {
+  font-weight: 500;
+}
+
+/* Style for icons */
+.bi {
+  color: #551a8b;
+}
+
+/* Hover effect for icons */
+.menu-item:hover i {
+  color: #551a8b;
+}
+
+.menu-item span {
+  font-size: 16px;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.menu-item:hover span {
+  color: #551a8b;
+}
+
+/* Optional: Style the list items for better spacing */
+.menu-list li {
+  margin-bottom: 10px;
+}
+
+/* Internal pages css */
+.wallet-container {
+  max-width: 1140px;
+  margin: 20px auto;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.balance {
+  font-size: 2rem;
+  font-weight: bold;
+}
+.card {
+  background-color: #dee2e638;
+  border: none;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.card h6 {
+  margin: 0;
+}
+
+/* User profile page css */
+.profile-view {
+    display: block;
+  }
+
+  .profile-picture {
+    max-width: 100px;
+    height: auto;
+    border-radius: 50%;
+  }
+.copy-btn {
+    background:linear-gradient(to bottom, #551a8b, rgb(255 115 0 / 34%));
+    color: white;
+    border: none;
+    /* padding: 2px; */
+    cursor: pointer;
+    margin: 5px;
+    border-radius: 10px;
+}
+.referral-box {
+  border: 2px solid #4CAF50;
+  padding: 10px;
+  text-align: center;
+  width: 300px;
+  margin: auto;
+  font-size: 18px;
+  font-weight: bold;
+  background: #f9f9f9;
+  border-radius: 5px;
+}
+.invite-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  width: 100%;
+  border-radius: 5px;
+}
+.share-links a {
+  display: block;
+  margin: 5px 0;
+  padding: 10px;
+  text-decoration: none;
+  color: white;
+  border-radius: 5px;
+  font-weight: bold;
+  text-align: center;
+}
+.whatsapp { background: #25D366; }
+.facebook { background: #3b5998; }
+.instagram { background: #E4405F; }
+.email { background: #D44638; }
+/* footer css */
+footer {
+  width: 100%;
+  padding: 20px 0;
+  background: linear-gradient(to bottom, #551a8b, rgb(255 115 0 / 34%));
+  color: white;
+  text-align: center;
+  font-size: 14px;
+  position: relative;
+}
+
+footer a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+footer .social-links {
+  margin: 10px 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+footer .social-links a {
+  font-size: 18px;
+  color: white;
+  transition: color 0.3s;
+}
+
+footer .social-links a:hover {
+  color: #ff7300;
+}
+/* footer nav css */
+.footer-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #fff;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  box-shadow: 0 4px 10px 0 rgb(8 39 32 / 14%);
+  margin-left: auto;
+  margin-right: auto;
+  border-top: 20px solid #fff;
+  z-index: 111;
+}
+.footer-nav a {
+  text-decoration: none;
+  color: #000;
+  text-align: center;
+  font-size: 14px;
+}
+.footer-nav img {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 5px;
+}
+
+/*.card {
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}*/
+.progress {
+    height: 10px;
+}
+.icon {
+    font-size: 24px;
+    color: #007bff;
+}
+
+.fixed-left-button {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    writing-mode: sideways-lr; /* Rotates text vertically */
+    text-orientation: mixed;
+    z-index: 1000; /* Ensures it stays above other elements */
+    background: red;
+    border: 1px solid #fff;
+    padding: 10px;
+}

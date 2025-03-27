@@ -1,0 +1,15 @@
+# Ignore Python-related files
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+
+# Ignore Django settings
+.env
+settings_local.py
+
+# Ignore PHP-related files
+vendor/
+*.log
