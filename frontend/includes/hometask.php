@@ -133,15 +133,15 @@ let videoCount = <?php echo $completed_tasks; ?>;
 let allowedVideos = <?php echo $total_videos; ?>;
 let totalEarnings = <?php echo $total_earnings; ?>;
 let earningPerVideo = <?php echo $earning_per_video; ?>;
+let remainingTasks = <?php echo $remaining_tasks; ?>;
+
+const videoBasePath = "http://127.0.0.1:8000/media/videos/";
 let taskId = <?php echo json_encode($task_id); ?>;
 let taskVideos = <?php echo json_encode($task_videos); ?>;
-let videoBasePath = "http://127.0.0.1:8000/media/videos/";
 let videoUrls = taskVideos.map(video => video.video_url.startsWith("http") ? video.video_url : videoBasePath + video.video_url.split('/').pop());
 
-let watchingVideoIndex = -1; // Track which video is being watched
-
-// Load watched videos from localStorage
-let watchedVideos = JSON.parse(localStorage.getItem("watchedVideos")) || {};
+let watchingVideoIndex = 0;
+let watchedVideos = new Set();
 
 function updateEarnings() {
     document.getElementById("earnings").innerText = totalEarnings;
@@ -150,10 +150,6 @@ function updateEarnings() {
 }
 
 function showTasks() {
-    videoCount = <?php echo $completed_tasks; ?>;
-    totalEarnings = <?php echo $total_earnings; ?>;
-    updateEarnings();
-
     const container = document.getElementById('tasks-container');
     container.innerHTML = '';
 
@@ -161,16 +157,14 @@ function showTasks() {
         const videoDiv = document.createElement('div');
         videoDiv.className = 'col-12 col-md-6 col-lg-4';
 
-        let isWatched = watchedVideos[taskId] && watchedVideos[taskId][i];
-
         videoDiv.innerHTML = `
             <div class="video-wrapper">
-                <video id="video${i}" width="100%" style="height: 228px;" controls ${i === 0 ? '' : 'disabled'}>
+                <video id="video${i}" width="100%" style="height: 228px;" ${i !== 0 ? 'disabled' : ''} controls>
                     <source src="${videoUrl}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <p class="bg-light white-text text-center flash-text p-10" id="status${i}">
-                    ${isWatched ? '<strong style="color:#fff;">✔ Video Completed</strong>' : `<strong>Earning:</strong> INR. ${earningPerVideo} Per Video`}
+                <p id="status${i}" class="bg-light white-text text-center flash-text p-10">
+                    <strong>Earning:</strong> INR. ${earningPerVideo} Per Video
                 </p>
             </div>
         `;
@@ -180,63 +174,26 @@ function showTasks() {
         let videoElement = document.getElementById(`video${i}`);
         let statusElement = document.getElementById(`status${i}`);
 
-        // **Ensure only the first video is playable initially**
-        if (i > 0 && !isWatched) {
-            videoElement.setAttribute("disabled", "true");
-        }
-
-        if (isWatched) {
-            videoElement.controls = false;
-            videoElement.style.pointerEvents = "none";
-            videoElement.style.border = "0px solid green";
-        }
-
-        videoElement.addEventListener("play", function () {
-            if (watchingVideoIndex !== -1 && watchingVideoIndex !== i) {
-                let currentlyPlaying = document.getElementById(`video${watchingVideoIndex}`);
-                currentlyPlaying.pause();
+        // Prevent fast-forwarding
+        videoElement.addEventListener("timeupdate", function () {
+            if (this.currentTime > this.lastTime + 2) {
+                this.currentTime = this.lastTime;
             }
-            watchingVideoIndex = i;
+            this.lastTime = this.currentTime;
         });
 
+        // Play event listener
+        videoElement.addEventListener("play", function () {
+            if (i !== watchingVideoIndex) {
+                this.pause();
+            } else {
+                disableOtherVideos(i);
+            }
+        });
+
+        // Track video completion
         videoElement.addEventListener("ended", function () {
-            if (videoElement.getAttribute("data-watched") === "true") return;
-
-            videoElement.setAttribute("data-watched", "true");
-            videoElement.controls = false;
-            videoElement.style.pointerEvents = "none";
-            statusElement.innerHTML = `<strong style="color:#fff;">✔ Video Completed</strong>`;
-
-            videoCount++;
-            totalEarnings += earningPerVideo;
-            updateEarnings();
-
-            // **Ensure watchedVideos is correctly structured**
-            if (!watchedVideos[taskId]) {
-                watchedVideos[taskId] = {};
-            }
-            watchedVideos[taskId][i] = true;
-
-            // **Save watchedVideos properly**
-            localStorage.setItem("watchedVideos", JSON.stringify(watchedVideos));
-
-            console.log("Updated Watched Videos:", watchedVideos);
-
-            // Enable the next video
-            let nextVideo = document.getElementById(`video${i + 1}`);
-            if (nextVideo) {
-                nextVideo.removeAttribute("disabled");
-            }
-
-            // **Send data to the server**
-            fetch("save_task.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `task_id=${encodeURIComponent(taskId)}&completed_tasks=1&total_earnings=${encodeURIComponent(earningPerVideo)}`,
-            })
-            .then(response => response.json())
-            .then(data => console.log("Server Response:", data))
-            .catch(error => console.error("Error:", error));
+            markVideoCompleted(i, videoElement, statusElement);
         });
     });
 
@@ -244,144 +201,54 @@ function showTasks() {
     document.getElementById('task-buttons').style.display = 'none';
 }
 
-function goBack() {
-    let currentVideo = document.getElementById(`video${watchingVideoIndex}`);
-    if (currentVideo && currentVideo.currentTime < currentVideo.duration * 0.95) {
-        alert("You need to finish watching the video to earn!");
-        return;
+function disableOtherVideos(activeIndex) {
+    videoUrls.forEach((_, i) => {
+        let videoElement = document.getElementById(`video${i}`);
+        if (i !== activeIndex) {
+            videoElement.setAttribute("disabled", true);
+        }
+    });
+}
+
+function markVideoCompleted(index, videoElement, statusElement) {
+    watchedVideos.add(index);
+    videoElement.setAttribute("data-watched", "true");
+    videoElement.style.border = "0px solid green";
+    videoElement.controls = false;
+    videoElement.style.pointerEvents = "none";
+    statusElement.innerHTML = `<strong style="color:#fff;">✔ Video Completed</strong>`;
+
+    videoCount++;
+    totalEarnings += earningPerVideo;
+    updateEarnings();
+
+    if (videoCount < allowedVideos) {
+        let nextVideo = document.getElementById(`video${index + 1}`);
+        if (nextVideo) {
+            nextVideo.removeAttribute("disabled");
+            watchingVideoIndex = index + 1;
+        }
     }
 
+    saveTaskProgress();
+}
+
+function saveTaskProgress() {
+    fetch("save_task.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `task_id=${encodeURIComponent(taskId)}&completed_tasks=1&total_earnings=${encodeURIComponent(earningPerVideo)}`,
+    })
+    .then(response => response.json())
+    .then(data => console.log("Server Response:", data))
+    .catch(error => console.error("Error:", error));
+}
+
+function goBack() {
     document.getElementById('task-list').style.display = 'none';
     document.getElementById('task-buttons').style.display = 'block';
 }
 
+// Ensure only one video can play at a time
 document.getElementById("watch-videos-btn").addEventListener("click", showTasks);
-
-
-
-
-
-
-// let videoCount = <?php echo $completed_tasks; ?>;
-// let allowedVideos = <?php echo $total_videos; ?>;
-// let totalEarnings = <?php echo $total_earnings; ?>;
-// let earningPerVideo = <?php echo $earning_per_video; ?>;
-// let remainingTasks = <?php echo $remaining_tasks; ?>;
-//
-// const videoBasePath = "http://127.0.0.1:8000/media/videos/";
-// let taskId = <?php echo json_encode($task_id); ?>;
-// let taskVideos = <?php echo json_encode($task_videos); ?>;
-// let videoUrls = taskVideos.map(video => video.video_url.startsWith("http") ? video.video_url : videoBasePath + video.video_url.split('/').pop());
-//
-// let watchingVideoIndex = 0;
-// let watchedVideos = new Set();
-//
-// function updateEarnings() {
-//     document.getElementById("earnings").innerText = totalEarnings;
-//     document.getElementById("completed-tasks").innerText = videoCount;
-//     document.getElementById("remaining-tasks").innerText = allowedVideos - videoCount;
-// }
-//
-// function showTasks() {
-//     const container = document.getElementById('tasks-container');
-//     container.innerHTML = '';
-//
-//     videoUrls.forEach((videoUrl, i) => {
-//         const videoDiv = document.createElement('div');
-//         videoDiv.className = 'col-12 col-md-6 col-lg-4';
-//
-//         videoDiv.innerHTML = `
-//             <div class="video-wrapper">
-//                 <video id="video${i}" width="100%" style="height: 228px;" ${i !== 0 ? 'disabled' : ''} controls>
-//                     <source src="${videoUrl}" type="video/mp4">
-//                     Your browser does not support the video tag.
-//                 </video>
-//                 <p id="status${i}" class="bg-light white-text text-center flash-text p-10">
-//                     <strong>Earning:</strong> INR. ${earningPerVideo} Per Video
-//                 </p>
-//             </div>
-//         `;
-//
-//         container.appendChild(videoDiv);
-//
-//         let videoElement = document.getElementById(`video${i}`);
-//         let statusElement = document.getElementById(`status${i}`);
-//
-//         // Prevent fast-forwarding
-//         videoElement.addEventListener("timeupdate", function () {
-//             if (this.currentTime > this.lastTime + 2) {
-//                 this.currentTime = this.lastTime;
-//             }
-//             this.lastTime = this.currentTime;
-//         });
-//
-//         // Play event listener
-//         videoElement.addEventListener("play", function () {
-//             if (i !== watchingVideoIndex) {
-//                 this.pause();
-//             } else {
-//                 disableOtherVideos(i);
-//             }
-//         });
-//
-//         // Track video completion
-//         videoElement.addEventListener("ended", function () {
-//             markVideoCompleted(i, videoElement, statusElement);
-//         });
-//     });
-//
-//     document.getElementById('task-list').style.display = 'block';
-//     document.getElementById('task-buttons').style.display = 'none';
-// }
-//
-// function disableOtherVideos(activeIndex) {
-//     videoUrls.forEach((_, i) => {
-//         let videoElement = document.getElementById(`video${i}`);
-//         if (i !== activeIndex) {
-//             videoElement.setAttribute("disabled", true);
-//         }
-//     });
-// }
-//
-// function markVideoCompleted(index, videoElement, statusElement) {
-//     watchedVideos.add(index);
-//     videoElement.setAttribute("data-watched", "true");
-//     videoElement.style.border = "0px solid green";
-//     videoElement.controls = false;
-//     videoElement.style.pointerEvents = "none";
-//     statusElement.innerHTML = `<strong style="color:#fff;">✔ Video Completed</strong>`;
-//
-//     videoCount++;
-//     totalEarnings += earningPerVideo;
-//     updateEarnings();
-//
-//     if (videoCount < allowedVideos) {
-//         let nextVideo = document.getElementById(`video${index + 1}`);
-//         if (nextVideo) {
-//             nextVideo.removeAttribute("disabled");
-//             watchingVideoIndex = index + 1;
-//         }
-//     }
-//
-//     saveTaskProgress();
-// }
-//
-// function saveTaskProgress() {
-//     fetch("save_task.php", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-//         body: `task_id=${encodeURIComponent(taskId)}&completed_tasks=1&total_earnings=${encodeURIComponent(earningPerVideo)}`,
-//     })
-//     .then(response => response.json())
-//     .then(data => console.log("Server Response:", data))
-//     .catch(error => console.error("Error:", error));
-// }
-//
-// function goBack() {
-//     document.getElementById('task-list').style.display = 'none';
-//     document.getElementById('task-buttons').style.display = 'block';
-// }
-//
-// // Ensure only one video can play at a time
-// document.getElementById("watch-videos-btn").addEventListener("click", showTasks);
 </script>

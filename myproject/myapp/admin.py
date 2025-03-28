@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Task, TaskVideo, Upis, Payment, CompletedTask, Users, Refund, MonthlyIncome, Withdrawal, KYC, \
     BankDetails, Profile, Wallet, ExtraIncome, Blog, Gallery, UserActivity, SupportTicket
-from django.db.models import Sum, Count, Avg, DurationField, ExpressionWrapper, F
+from django.db.models import Sum, Count, Avg, Q
 from django.utils.html import format_html
 from django.utils.timezone import now
 from datetime import timedelta
@@ -287,31 +287,45 @@ class UserActivityAdmin(admin.ModelAdmin):
     list_display = ('user_mobile', 'login_time', 'logout_time', 'session_duration')
 
     def changelist_view(self, request, extra_context=None):
-        # Calculate user activity stats
         today = now().date()
+        week_start = today - timedelta(days=7)
+        month_start = today - timedelta(days=30)
 
+        # 🟢 1. Daily Active Users (Users who logged in today)
         daily_active_users = UserActivity.objects.filter(login_time__date=today).values('user_mobile').distinct().count()
-        weekly_active_users = UserActivity.objects.filter(login_time__week=today.isocalendar()[1]).values('user_mobile').distinct().count()
-        monthly_active_users = UserActivity.objects.filter(login_time__month=today.month).values('user_mobile').distinct().count()
 
+        # 🟢 2. Weekly Active Users
+        weekly_active_users = UserActivity.objects.filter(login_time__date__gte=week_start).values('user_mobile').distinct().count()
+
+        # 🟢 3. Monthly Active Users
+        monthly_active_users = UserActivity.objects.filter(login_time__date__gte=month_start).values('user_mobile').distinct().count()
+
+        # 🟢 4. Average Session Duration
         avg_session_duration = UserActivity.objects.aggregate(avg_duration=Avg('session_duration'))['avg_duration']
 
-        returning_users = UserActivity.objects.filter(login_time__date=today).exclude(
-            user_mobile__in=UserActivity.objects.filter(login_time__date=today).values_list('user_mobile', flat=True)
+        # 🟢 5. New Users Today
+        new_users_today = Users.objects.filter(created_at__date=today).count()
+
+        # 🟢 6. Returning Users (Users who logged in today and before)
+        returning_users = UserActivity.objects.filter(
+            login_time__date=today,
+            user_mobile__in=UserActivity.objects.filter(login_time__date__lt=today).values_list('user_mobile', flat=True)
         ).values('user_mobile').distinct().count()
 
-        new_users_today = UserActivity.objects.filter(login_time__date=today).count()
+        # 🟢 7. Top Users by Logins (Users with most logins)
+        top_users = UserActivity.objects.values('user_mobile').annotate(login_count=Count('login_time')).order_by('-login_count')[:5]
 
-        top_users = UserActivity.objects.values('user_mobile').annotate(login_count=Count('id')).order_by('-login_count')[:10]
-
+        # Prepare data for the admin panel
         extra_context = extra_context or {}
-        extra_context['daily_active_users'] = daily_active_users
-        extra_context['weekly_active_users'] = weekly_active_users
-        extra_context['monthly_active_users'] = monthly_active_users
-        extra_context['avg_session_duration'] = avg_session_duration
-        extra_context['returning_users'] = returning_users
-        extra_context['new_users_today'] = new_users_today
-        extra_context['top_users'] = top_users
+        extra_context.update({
+            'daily_active_users': daily_active_users,
+            'weekly_active_users': weekly_active_users,
+            'monthly_active_users': monthly_active_users,
+            'avg_session_duration': avg_session_duration,
+            'returning_users': returning_users,
+            'new_users_today': new_users_today,
+            'top_users': top_users,
+        })
 
         return super().changelist_view(request, extra_context=extra_context)
 

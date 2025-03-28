@@ -1,0 +1,21 @@
+{% extends "admin/change_list.html" %}
+{% block content %}
+<div class="module">
+    <h2>User Activity Overview</h2>
+    <ul>
+        <li><strong>Daily Active Users:</strong> {{ daily_active_users }}</li>
+        <li><strong>Weekly Active Users:</strong> {{ weekly_active_users }}</li>
+        <li><strong>Monthly Active Users:</strong> {{ monthly_active_users }}</li>
+        <li><strong>Avg. Session Duration:</strong> {{ avg_session_duration }}</li>
+        <li><strong>New Users Today:</strong> {{ new_users_today }}</li>
+        <li><strong>Returning Users:</strong> {{ returning_users }}</li>
+    </ul>
+    <h3>Top Users by Logins</h3>
+    <ul>
+        {% for user in top_users %}
+            <li>{{ user.user_mobile }} - {{ user.login_count }} times login</li>
+        {% endfor %}
+    </ul>
+</div>
+{{ block.super }}
+{% endblock %}

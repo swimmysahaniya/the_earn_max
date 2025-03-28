@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task, TaskVideo, Payment, CompletedTask, Referral, Users, Refund, MonthlyIncome, Wallet, Withdrawal
+from .models import Task, TaskVideo, Payment, CompletedTask, Users, Refund, MonthlyIncome, Wallet, Withdrawal
 from django.contrib.auth.hashers import make_password
 
 
@@ -33,12 +33,6 @@ class CompletedTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompletedTask
         fields = '__all__'  # Includes all fields
-
-
-class ReferralSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Referral
-        fields = '__all__'
 
 
 class UsersSerializer(serializers.ModelSerializer):

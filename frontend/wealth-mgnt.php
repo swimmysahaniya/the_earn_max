@@ -88,7 +88,9 @@ $referral_earnings = $referralResult['referral_earnings'];
 // Total balance
 $total_balance = $monthly_income + $task_earnings + $extra_earnings + $total_refunds - $total_withdrawal + $referral_earnings;
 
-// Fetch yesterday & today's earnings
+$bonus_income = $monthly_income + $total_refunds;
+
+// Fetch yesterday & today's task earnings
 $yesterdayQuery = "SELECT COALESCE(SUM(ct.total_earnings), 0) AS yesterday_earnings
                    FROM myapp_completedtask ct
                    WHERE ct.user_mobile = ? AND DATE(ct.date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)";
@@ -98,7 +100,7 @@ $stmt->execute();
 $yesterdayResult = $stmt->get_result()->fetch_assoc();
 $yesterday_earnings = $yesterdayResult['yesterday_earnings'];
 
-// Today's earnings
+// Today's task earnings
 $todayQuery = "SELECT COALESCE(SUM(ct.total_earnings), 0) AS today_earnings
                FROM myapp_completedtask ct
                WHERE ct.user_mobile = ? AND DATE(ct.date) = CURDATE()";
@@ -107,6 +109,29 @@ $stmt->bind_param("s", $user_mobile);
 $stmt->execute();
 $todayResult = $stmt->get_result()->fetch_assoc();
 $today_earnings = $todayResult['today_earnings'];
+
+// this week's task earnings
+$weeklyQuery = "SELECT COALESCE(SUM(ct.total_earnings), 0) AS weekly_earnings
+                FROM myapp_completedtask ct
+                WHERE ct.user_mobile = ?
+                AND DATE(ct.date) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+$stmt = $conn->prepare($weeklyQuery);
+$stmt->bind_param("s", $user_mobile);
+$stmt->execute();
+$weeklyResult = $stmt->get_result()->fetch_assoc();
+$weekly_earnings = $weeklyResult['weekly_earnings'];
+
+// this months's task earnings
+$monthlyQuery = "SELECT COALESCE(SUM(ct.total_earnings), 0) AS monthly_earnings
+                 FROM myapp_completedtask ct
+                 WHERE ct.user_mobile = ?
+                 AND DATE(ct.date) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+$stmt = $conn->prepare($monthlyQuery);
+$stmt->bind_param("s", $user_mobile);
+$stmt->execute();
+$monthlyResult = $stmt->get_result()->fetch_assoc();
+$monthly_earnings = $monthlyResult['monthly_earnings'];
+
 
 // Total revenue
 $total_revenue = $total_balance;
@@ -140,13 +165,13 @@ $total_revenue = $total_balance;
     <div class="col-6">
       <div class="card p-2">
       <h6>This Week's Task Earnings</h6>
-        <p><?php echo number_format($task_earnings, 2); ?></p>
+        <p><?php echo number_format($weekly_earnings, 2); ?></p>
       </div>
     </div>
     <div class="col-6">
       <div class="card p-2">
-        <h6>Monthly Income</h6>
-        <p><?php echo number_format($monthly_income, 2); ?></p>
+        <h6>This Month's Task Earnings</h6>
+        <p><?php echo number_format($monthly_earnings, 2); ?></p>
       </div>
     </div>
     <div class="col-6">
@@ -164,7 +189,7 @@ $total_revenue = $total_balance;
     <div class="col-6">
       <div class="card p-2">
         <h6>Bonus Income</h6>
-        <p><?php echo number_format($total_refunds, 2); ?></p>
+        <p><?php echo number_format($bonus_income, 2); ?></p>
       </div>
     </div>
     <div class="col-6">

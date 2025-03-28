@@ -5,9 +5,9 @@ from django.http import JsonResponse
 from django.views import View
 
 from rest_framework import generics, status
-from .models import Task, TaskVideo, Payment, CompletedTask, Referral, Users, Refund, MonthlyIncome, Wallet, Withdrawal
+from .models import Task, TaskVideo, Payment, CompletedTask, Users, Refund, MonthlyIncome, Wallet, Withdrawal
 from .serializers import TaskSerializer, TaskVideoSerializer, PaymentSerializer, CompletedTaskSerializer, \
-        ReferralSerializer, UsersSerializer, SignupSerializer, RefundSerializer, MonthlyIncomeSerializer, \
+        UsersSerializer, SignupSerializer, RefundSerializer, MonthlyIncomeSerializer, \
         WalletSerializer, WithdrawalSerializer
 
 from rest_framework.response import Response
@@ -63,12 +63,6 @@ class CompletedTaskListCreateView(generics.ListCreateAPIView):
 class CompletedTaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CompletedTask.objects.all()
     serializer_class = CompletedTaskSerializer
-
-
-# API to list all referrals and create a new one
-class ReferralListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Referral.objects.all()
-    serializer_class = ReferralSerializer
 
 
 # API to list users and create a new one

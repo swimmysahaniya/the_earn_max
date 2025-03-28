@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from .views import TaskListAPI, TaskVideoListAPI, PaymentListCreateView, PaymentDetailView, CompletedTaskListCreateView, \
-    CompletedTaskDetailView, ReferralListCreateAPIView, UserListCreateAPIView, SignupAPIView, RefundListAPIView, \
+    CompletedTaskDetailView, UserListCreateAPIView, SignupAPIView, RefundListAPIView, \
     MonthlyIncomeAPI, get_wallet, get_withdrawals
 
 
@@ -14,7 +14,6 @@ urlpatterns = [
     path('api/completed-tasks/', CompletedTaskListCreateView.as_view(), name='completed-task-list-create'),
     path('api/completed-tasks/<int:pk>/', CompletedTaskDetailView.as_view(), name='completed-task-detail'),
 
-    path('api/referrals/', ReferralListCreateAPIView.as_view(), name='referrals-api'),
     path('api/users/', UserListCreateAPIView.as_view(), name='users-api'),
     path('api/signup/', SignupAPIView.as_view(), name='signup-api'),
 

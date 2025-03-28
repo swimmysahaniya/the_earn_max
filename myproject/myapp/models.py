@@ -59,23 +59,6 @@ class CompletedTask(models.Model):
         return f"{self.user_mobile} - {self.completed_tasks} tasks - {self.total_earnings} INR"
 
 
-class Referral(models.Model):
-    STATUS_CHOICES = [
-        ('0', 'No Refund'),
-        ('1', 'Partial Refund'),
-        ('2', 'Full Refund'),
-    ]
-
-    referrer_mobile = models.CharField(max_length=20)
-    referred_mobile = models.CharField(max_length=20, unique=True)
-    invested_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
-    refund_status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='0')
-
-    def __str__(self):
-        return f"{self.referrer_mobile} referred {self.referred_mobile}"
-
-
 class Users(models.Model):
     STATUS_CHOICES = [
         ('0', 'Pending'),
@@ -312,6 +295,16 @@ class SupportTicket(models.Model):
 
     def __str__(self):
         return f"{self.user_mobile} - {self.subject}"
+
+
+class WatchedVideo(models.Model):
+    user_mobile = models.ForeignKey(Users, on_delete=models.CASCADE, to_field='mobile', related_name="watched_videos")
+    task_id = models.CharField(max_length=255)  # Store the task ID
+    video_url = models.CharField(max_length=500)  # Store video URL or video ID
+    watched_at = models.DateTimeField(auto_now_add=True)  # Timestamp of when the video was watched
+
+    def __str__(self):
+        return f"{self.user_mobile} watched {self.video_url}"
 
 
 
