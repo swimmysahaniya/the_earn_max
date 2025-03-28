@@ -9,92 +9,6 @@ if (!isset($_SESSION["user_mobile"])) {
 
 $user_mobile = $_SESSION["user_mobile"];
 
-// Fetch users data from Django API
-$users_api_url = "http://127.0.0.1:8000/api/users/";
-$users_data = json_decode(file_get_contents($users_api_url), true);
-
-// Fetch approved payments from Django API
-$payments_api_url = "http://127.0.0.1:8000/api/payments/";
-$payments_data = json_decode(file_get_contents($payments_api_url), true);
-
-/***************************************************** joining rule start **************************************/
-
-// Get logged-in user's investment
-/* $user_payment = null;
-foreach ($payments_data as $payment) {
-    if ($payment['user_mobile'] == $user_mobile && $payment['status'] == '1') {
-        $user_payment = $payment;
-        break;
-    }
-}
-
-if ($user_payment) {
-    $investment_amount = $user_payment['amount'];
-
-    // Fetch logged-in user's referral code
-    $user_referral_code = null;
-    foreach ($users_data as $user) {
-        if ($user['mobile'] == $user_mobile) { // Find the logged-in user's data
-            $user_referral_code = $user['referral_code'];
-            break;
-        }
-    }
-
-    // Debugging (Optional: Remove after testing)
-    if (!$user_referral_code) {
-        die("Referral code not found for the logged-in user.");
-    }
-
-    // Find all users referred by the logged-in user
-    $referred_users = [];
-    foreach ($users_data as $user) {
-        if ($user['invited_by'] == $user_referral_code) { // Fetch users referred by logged-in user
-            $referred_users[] = $user['mobile'];
-        }
-    }
-
-    if (!empty($referred_users)) {
-        $total_referred_investment = 0;
-
-        // Calculate total investment from referred users
-        foreach ($payments_data as $payment) {
-            if (in_array($payment['user_mobile'], $referred_users) && $payment['status'] == '1') {
-                $total_referred_investment += $payment['amount'];
-            }
-        }
-
-        if ($total_referred_investment > 0) {
-            // Calculate Refund Amount
-            $refund_amount = min($investment_amount, $total_referred_investment);
-
-            $conn->begin_transaction();
-
-            // Lock the row for update to prevent duplicate claims
-            $check_refund_query = $conn->prepare("SELECT COUNT(*), SUM(refunded_amount) FROM myapp_refund WHERE user_mobile_id = ? FOR UPDATE");
-            $check_refund_query->bind_param("s", $user_mobile);
-            $check_refund_query->execute();
-            $check_refund_query->store_result();
-            $check_refund_query->bind_result($existing_count, $total_refunded);
-            $check_refund_query->fetch();
-
-            if ($total_refunded < $investment_amount && $existing_count == 0) {
-                // Insert refund for the logged-in user based on referred users' investment
-                $stmt = $conn->prepare("INSERT INTO myapp_refund (user_mobile_id, refunded_amount, status, created_at) VALUES (?, ?, '0', NOW())");
-                $stmt->bind_param("sd", $user_mobile, $refund_amount);
-                $stmt->execute();
-                $stmt->close();
-                $conn->commit(); // Commit transaction
-            } else {
-                $conn->rollback(); // Undo transaction if refund is not needed
-            }
-
-            $check_refund_query->close();
-        }
-    }
-} */
-
-/***************************************************** joining rule end **************************************/
-
 /***************************************************** monthly income start **************************************/
 
 // Check if user has received a full refund
@@ -117,12 +31,14 @@ if ($has_full_refund) {
 
     // Fetch the logged-in user's referral code in one step
     $referral_code = null;
-    foreach ($users_data as $user) {
-        if ($user['mobile'] == $user_mobile) {
-            $referral_code = $user['referral_code'];
-            break;
-        }
-    }
+    $user_query = $conn->prepare("SELECT * FROM myapp_users WHERE mobile = ?");
+    $user_query->bind_param("s", $user_mobile);
+    $user_query->execute();
+    $user_result = $user_query->get_result();
+    $user_data = $user_result->fetch_assoc();
+    $user_query->close();
+
+    $referral_code = $user_data['referral_code']; // Get referral code
 //print_r($referral_code);die;
     // Initialize referral amount
     $total_new_investment = 0;
@@ -225,14 +141,7 @@ $task_earnings_query->close();
 
 // Count referrals made by the user
 // Step 1: Fetch the referral code of the logged-in user
-$referral_code = null;
-foreach ($users_data as $user) {
-    if ($user['mobile'] == $user_mobile) { // Find the logged-in user's referral code
-        $referral_code = $user['referral_code'];
-        break;
-    }
-}
-
+//print_r($referral_code);die;
 // Step 2: Fetch the count of users who used this referral code
 $referral_count = 0;
 if (!empty($referral_code)) {

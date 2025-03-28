@@ -12,10 +12,14 @@ include("includes/config.php");
 $user_mobile = $_SESSION['user_mobile'] ?? '';
 
 
-// Fetch Membership Plans from API
-$api_url = "http://127.0.0.1:8000/api/tasks/";
-$response = file_get_contents($api_url);
-$memberships = json_decode($response, true); // Convert JSON response to PHP array
+// Fetch Membership Plans from Database
+$query = "SELECT task_number, title, amount, earning, no_of_videos FROM myapp_task ORDER BY task_number ASC, title ASC";
+$result = $conn->query($query);
+
+$memberships = [];
+while ($row = $result->fetch_assoc()) {
+    $memberships[] = $row;
+}
 
 // Sort tasks by `task_number` (numeric) and then by `title` (alphabetically)
 usort($memberships, function ($a, $b) {
