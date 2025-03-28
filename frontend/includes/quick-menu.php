@@ -22,7 +22,7 @@
     <!-- Event News -->
     <div class="col-6 col-md-4">
       <div class="icon-card">
-        <a href="./" class="text-center">
+        <a href="blogs.php" class="text-center">
           <i class='fas fa-blog' aria-hidden="true" style='font-size:20px'></i><br>
           <span>Event News</span>
         </a>

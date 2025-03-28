@@ -9,6 +9,18 @@ if (!$user_mobile) {
     exit;
 }
 
+// Fetch watched videos for the user
+$query = "SELECT video_url FROM myapp_watchedvideo WHERE user_mobile_id = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("s", $user_mobile);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$watched_videos = [];
+while ($row = $result->fetch_assoc()) {
+    $watched_videos[] = $row['video_url'];
+}
+
 // Fetch user's membership amount
 $query = "SELECT amount FROM myapp_payment WHERE user_mobile_id = ? AND status = '1'";
 $stmt = $conn->prepare($query);
@@ -38,36 +50,48 @@ $total_earnings = $row['total_earnings'] ?? 0;
 
 //print_r($result);die;
 
-// Fetch tasks and videos from Django API
-$api_url = "http://127.0.0.1:8000/api/tasks/";
-$response = @file_get_contents($api_url);
+// Fetch tasks and associated videos from the database
+$query = "SELECT
+            t.id AS task_id,
+            t.amount,
+            t.no_of_videos,
+            t.earning,
+            t.task_number,
+            v.id AS video_id,
+            v.video
+        FROM myapp_task AS t
+        LEFT JOIN myapp_taskvideo AS v ON t.id = v.task_id
+        ORDER BY t.amount ASC";
 
-if ($response === false) {
-    echo "<p>Failed to fetch tasks. Check if Django is running.</p>";
-    exit();
-}
+$stmt = $conn->prepare($query);
+$stmt->execute();
+$result = $stmt->get_result();
 
-$tasks = json_decode($response, true);
-
-if (!is_array($tasks)) {
-    echo "<p>Invalid API response.</p>";
-    exit();
+$tasks = [];
+while ($row = $result->fetch_assoc()) {
+    $task_id = $row['task_id'];
+    if (!isset($tasks[$task_id])) {
+        $tasks[$task_id] = [
+            'task_id' => $row['task_id'],
+            'amount' => $row['amount'],
+            'no_of_videos' => $row['no_of_videos'],
+            'earning' => $row['earning'],
+            'task_number' => $row['task_number'],
+            'videos' => []
+        ];
+    }
+    if ($row['video_id']) {
+        $tasks[$task_id]['videos'][] = [
+            'video_id' => $row['video_id'],
+            'video' => $row['video']
+        ];
+    }
 }
 
 // Organize membership levels
 $membership_levels = [];
-if (!empty($tasks)) {
-    foreach ($tasks as $task) {
-        if (isset($task['amount'], $task['no_of_videos'], $task['earning'], $task['task_number'], $task['videos'], $task['id'])) {
-            $membership_levels[$task['amount']] = [
-                'task_number' => $task['task_number'],
-                'videos' => $task['videos'],
-                'no_of_videos' => $task['no_of_videos'],
-                'earning' => $task['earning'],
-                'task_id' => $task['id'],
-            ];
-        }
-    }
+foreach ($tasks as $task) {
+    $membership_levels[$task['amount']] = $task;
 }
 
 // Get user's task and videos based on membership level
@@ -79,6 +103,7 @@ $task_id = $membership_levels[$user_membership]['task_id'] ?? 0;
 
 // Calculate remaining tasks
 $remaining_tasks = max(0, $total_videos - $completed_tasks);
+//print_r($remaining_tasks);die;
 ?>
 
 <div class="container py-4">
@@ -129,6 +154,7 @@ $remaining_tasks = max(0, $total_videos - $completed_tasks);
 </div>
 
 <script>
+let watchedVideosFromDB = <?php echo json_encode($watched_videos); ?>;
 let videoCount = <?php echo $completed_tasks; ?>;
 let allowedVideos = <?php echo $total_videos; ?>;
 let totalEarnings = <?php echo $total_earnings; ?>;
@@ -138,15 +164,32 @@ let remainingTasks = <?php echo $remaining_tasks; ?>;
 const videoBasePath = "http://127.0.0.1:8000/media/videos/";
 let taskId = <?php echo json_encode($task_id); ?>;
 let taskVideos = <?php echo json_encode($task_videos); ?>;
-let videoUrls = taskVideos.map(video => video.video_url.startsWith("http") ? video.video_url : videoBasePath + video.video_url.split('/').pop());
+let videoUrls = taskVideos.map(video => video.video.startsWith("http") ? video.video : videoBasePath + video.video.split('/').pop());
 
-let watchingVideoIndex = 0;
-let watchedVideos = new Set();
+let watchedVideos = new Set(watchedVideosFromDB); // Convert to Set
+let watchingVideoIndex = videoUrls.findIndex(url => !watchedVideos.has(url)); // First unwatched video
+
+if (watchingVideoIndex === -1) watchingVideoIndex = 0; // If all are watched, default to first
 
 function updateEarnings() {
     document.getElementById("earnings").innerText = totalEarnings;
     document.getElementById("completed-tasks").innerText = videoCount;
     document.getElementById("remaining-tasks").innerText = allowedVideos - videoCount;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    showTasks();
+});
+
+function saveWatchedVideo(videoUrl) {
+    fetch("save_watched_video.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `task_id=${encodeURIComponent(taskId)}&video_url=${encodeURIComponent(videoUrl)}`,
+    })
+    .then(response => response.json())
+    .then(data => console.log("Server Response:", data))
+    .catch(error => console.error("Error:", error));
 }
 
 function showTasks() {
@@ -157,9 +200,12 @@ function showTasks() {
         const videoDiv = document.createElement('div');
         videoDiv.className = 'col-12 col-md-6 col-lg-4';
 
+        let isWatched = watchedVideos.has(videoUrl);
+        let isDisabled = i !== watchingVideoIndex || isWatched; // Only the first unwatched video should be enabled
+
         videoDiv.innerHTML = `
             <div class="video-wrapper">
-                <video id="video${i}" width="100%" style="height: 228px;" ${i !== 0 ? 'disabled' : ''} controls>
+                <video id="video${i}" width="100%" style="height: 228px;" ${isDisabled ? 'controls="false"' : 'controls'}>
                     <source src="${videoUrl}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
@@ -174,15 +220,19 @@ function showTasks() {
         let videoElement = document.getElementById(`video${i}`);
         let statusElement = document.getElementById(`status${i}`);
 
+        if (isWatched) {
+            markVideoUnplayable(videoElement, statusElement);
+        }
+
         // Prevent fast-forwarding
         videoElement.addEventListener("timeupdate", function () {
-            if (this.currentTime > this.lastTime + 2) {
+            if (this.currentTime > (this.lastTime || 0) + 2) {
                 this.currentTime = this.lastTime;
             }
             this.lastTime = this.currentTime;
         });
 
-        // Play event listener
+        // Ensure only one video plays at a time
         videoElement.addEventListener("play", function () {
             if (i !== watchingVideoIndex) {
                 this.pause();
@@ -191,9 +241,9 @@ function showTasks() {
             }
         });
 
-        // Track video completion
+        // Mark video as watched
         videoElement.addEventListener("ended", function () {
-            markVideoCompleted(i, videoElement, statusElement);
+            markVideoCompleted(i, videoElement, statusElement, videoUrl);
         });
     });
 
@@ -205,18 +255,16 @@ function disableOtherVideos(activeIndex) {
     videoUrls.forEach((_, i) => {
         let videoElement = document.getElementById(`video${i}`);
         if (i !== activeIndex) {
-            videoElement.setAttribute("disabled", true);
+            videoElement.controls = false;
+            videoElement.style.pointerEvents = "none";
         }
     });
 }
 
-function markVideoCompleted(index, videoElement, statusElement) {
-    watchedVideos.add(index);
+function markVideoCompleted(index, videoElement, statusElement, videoUrl) {
+    watchedVideos.add(videoUrl);
     videoElement.setAttribute("data-watched", "true");
-    videoElement.style.border = "0px solid green";
-    videoElement.controls = false;
-    videoElement.style.pointerEvents = "none";
-    statusElement.innerHTML = `<strong style="color:#fff;">✔ Video Completed</strong>`;
+    markVideoUnplayable(videoElement, statusElement);
 
     videoCount++;
     totalEarnings += earningPerVideo;
@@ -225,19 +273,26 @@ function markVideoCompleted(index, videoElement, statusElement) {
     if (videoCount < allowedVideos) {
         let nextVideo = document.getElementById(`video${index + 1}`);
         if (nextVideo) {
-            nextVideo.removeAttribute("disabled");
+            nextVideo.controls = true;
+            nextVideo.style.pointerEvents = "auto";
             watchingVideoIndex = index + 1;
         }
     }
 
-    saveTaskProgress();
+    saveTaskProgress(videoUrl);
 }
 
-function saveTaskProgress() {
+function markVideoUnplayable(videoElement, statusElement) {
+    videoElement.controls = false;
+    videoElement.style.pointerEvents = "none";
+    statusElement.innerHTML = `<strong style="color:#fff;">✔ Video Completed</strong>`;
+}
+
+function saveTaskProgress(videoUrl) {
     fetch("save_task.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `task_id=${encodeURIComponent(taskId)}&completed_tasks=1&total_earnings=${encodeURIComponent(earningPerVideo)}`,
+        body: `task_id=${encodeURIComponent(taskId)}&completed_tasks=1&total_earnings=${encodeURIComponent(earningPerVideo)}&video_url=${encodeURIComponent(videoUrl)}`,
     })
     .then(response => response.json())
     .then(data => console.log("Server Response:", data))
@@ -249,6 +304,5 @@ function goBack() {
     document.getElementById('task-buttons').style.display = 'block';
 }
 
-// Ensure only one video can play at a time
 document.getElementById("watch-videos-btn").addEventListener("click", showTasks);
 </script>
